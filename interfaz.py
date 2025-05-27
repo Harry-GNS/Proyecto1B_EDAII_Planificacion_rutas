@@ -1,108 +1,182 @@
-import tkinter as tk
-from tkinter import messagebox, filedialog
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import sys
+from PyQt5.QtWidgets import (
+    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
+    QPushButton, QTextEdit, QFileDialog, QMessageBox, QInputDialog, QFrame, QSizePolicy
+)
+from PyQt5.QtGui import QFont
+from PyQt5.QtCore import Qt
 import matplotlib.pyplot as plt
 import networkx as nx
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+
 from grafo import Grafo
 from dfs import dfs
 
-class TransporteApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Planificador de Rutas DFS")
-        self.root.configure(bg="#23272e")
+class GrafoCanvas(FigureCanvas):
+    def __init__(self, grafo):
+        self.fig, self.ax = plt.subplots(figsize=(7, 6), dpi=120)
+        super().__init__(self.fig)
+        self.set_grafo(grafo)
+
+    def set_grafo(self, grafo):
+        self.ax.clear()
+        G = nx.Graph()
+        for nombre, nodo in grafo.nodos.items():
+            G.add_node(nombre)
+            for adyacente in nodo.adyacentes:
+                G.add_edge(nombre, adyacente.nombre)
+        pos = nx.spring_layout(G, seed=42)
+        nx.draw(
+            G, pos,
+            with_labels=False,
+            node_color="#E0E7EF",
+            node_size=320,
+            edge_color="#B0BEC5",
+            linewidths=1.5,
+            ax=self.ax
+        )
+        label_pos = {k: (v[0], v[1]+0.09) for k, v in pos.items()}
+        nx.draw_networkx_labels(
+            G, label_pos,
+            labels={n: n for n in G.nodes()},
+            font_size=9,
+            font_color="#FFFFFF",
+            font_weight='light',
+            bbox=dict(boxstyle="round,pad=0.25", fc="#23272e", ec="#B0BEC5", lw=1, alpha=0.85),
+            ax=self.ax
+        )
+        self.ax.set_title(
+            "Grafo de Paradas",
+            fontsize=11,
+            color="#B0BEC5",
+            fontweight='light',
+            pad=8
+        )
+        self.ax.set_facecolor("#23272e")
+        self.fig.patch.set_facecolor("#23272e")
+        self.ax.axis('off')
+        self.draw()
+
+class TransporteApp(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Planificador de Rutas DFS")
+        self.setStyleSheet("""
+            QWidget { background: #23272e; }
+            QLabel, QLineEdit, QTextEdit {
+                color: #e0e7ef;
+                font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+                font-size: 11pt;
+                font-weight: 400;
+            }
+            QPushButton {
+                background: #23272e;
+                color: #e0e7ef;
+                border: 1px solid #44475a;
+                border-radius: 7px;
+                padding: 7px 18px;
+                font-size: 11pt;
+                font-weight: 500;
+            }
+            QPushButton:hover {
+                background: #44475a;
+                color: #ffffff;
+            }
+            QLineEdit, QTextEdit {
+                background: #282a36;
+                border: 1px solid #44475a;
+                border-radius: 6px;
+                font-size: 11pt;
+            }
+            QTextEdit { padding: 8px; }
+        """)
         self.grafo = Grafo()
+        self.init_ui()
+        self.showMaximized()
 
-        # Frame principal
-        main_frame = tk.Frame(root, bg="#23272e")
-        main_frame.pack(padx=20, pady=20, fill=tk.BOTH, expand=True)
+    def init_ui(self):
+        main_layout = QHBoxLayout(self)
 
-        # Título
-        titulo = tk.Label(main_frame, text="Planificador de Rutas DFS", font=("Segoe UI", 18, "bold"), bg="#23272e", fg="#f8f8f2")
-        titulo.pack(pady=(0, 15))
+        # --- LADO IZQUIERDO: Controles ---
+        left_panel = QVBoxLayout()
+        left_panel.setSpacing(18)
+
+        title = QLabel("Planificador de Rutas DFS")
+        title.setFont(QFont("Segoe UI", 20, QFont.Bold))
+        title.setAlignment(Qt.AlignCenter)
+        left_panel.addWidget(title)
 
         # Entrada de paradas
-        entry_frame = tk.Frame(main_frame, bg="#23272e")
-        entry_frame.pack(fill=tk.X, pady=5)
-        self.label = tk.Label(entry_frame, text="Parada (origen,destino):", bg="#23272e", fg="#f8f8f2", font=("Segoe UI", 11))
-        self.label.pack(side=tk.LEFT, padx=(0, 8))
-        self.entry = tk.Entry(entry_frame, width=30, font=("Segoe UI", 11))
-        self.entry.pack(side=tk.LEFT, padx=5)
-        # Botón estilo uniforme
-        button_style = {
-            "bg": "#1976D2",
-            "fg": "#FFFFFF",
-            "font": ("Segoe UI", 10, "bold"),
-            "relief": tk.FLAT,
-            "activebackground": "#1565C0"
-        }
-        self.agregar_btn = tk.Button(entry_frame, text="Agregar", command=self.agregar_parada, **button_style)
-        self.agregar_btn.pack(side=tk.LEFT, padx=5)
-        self.cargar_btn = tk.Button(entry_frame, text="Cargar CSV", command=self.cargar_csv, **button_style)
-        self.cargar_btn.pack(side=tk.LEFT, padx=5)
+        self.entry = QLineEdit()
+        self.entry.setPlaceholderText("Parada (origen,destino)")
+        left_panel.addWidget(self.entry)
 
-        # Botones de acción
-        action_frame = tk.Frame(main_frame, bg="#23272e")
-        action_frame.pack(fill=tk.X, pady=10)
-        self.buscar_btn = tk.Button(action_frame, text="Buscar Ruta DFS", command=self.buscar_ruta, **button_style)
-        self.buscar_btn.pack(side=tk.LEFT, padx=5)
-        # Botón de mostrar grafo eliminado para actualizar automáticamente
+        self.add_btn = QPushButton("Agregar")
+        self.add_btn.clicked.connect(self.agregar_parada)
+        left_panel.addWidget(self.add_btn)
 
-        # Texto de resultados
-        self.texto = tk.Text(main_frame, height=7, width=60, bg="#282a36", fg="#f8f8f2", font=("Consolas", 10), relief=tk.FLAT, borderwidth=5)
-        self.texto.pack(pady=10, fill=tk.X)
+        self.csv_btn = QPushButton("Cargar CSV")
+        self.csv_btn.clicked.connect(self.cargar_csv)
+        left_panel.addWidget(self.csv_btn)
 
-        # Frame para el grafo
-        self.grafo_frame = tk.Frame(main_frame, bg="#44475a", bd=2, relief=tk.GROOVE)
-        self.grafo_frame.pack(pady=5, fill=tk.BOTH, expand=True)
-        self.canvas = None  # Para el canvas de matplotlib
+        self.buscar_btn = QPushButton("Buscar Ruta DFS")
+        self.buscar_btn.clicked.connect(self.buscar_ruta)
+        left_panel.addWidget(self.buscar_btn)
+
+        # Texto de resultados de agregados/cargados
+        self.texto = QTextEdit()
+        self.texto.setReadOnly(True)
+        self.texto.setFixedHeight(90)
+        left_panel.addWidget(self.texto)
+
+        # Línea separadora
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+        line.setStyleSheet("color: #44475a; background: #44475a; max-height: 2px;")
+        left_panel.addWidget(line)
+
+        # Texto de resultado de búsqueda DFS (abajo, separado)
+        self.resultado = QTextEdit()
+        self.resultado.setReadOnly(True)
+        self.resultado.setFixedHeight(40)
+        left_panel.addWidget(self.resultado)
+
+        # Espaciador para empujar todo hacia arriba
+        left_panel.addStretch(1)
+
+        # --- LADO DERECHO: Grafo ---
+        self.grafo_canvas = GrafoCanvas(self.grafo)
+        self.grafo_canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        # --- Distribución principal ---
+        main_layout.addLayout(left_panel, stretch=1)
+        main_layout.addWidget(self.grafo_canvas, stretch=3)
 
     def agregar_parada(self):
-        datos = self.entry.get().strip()
+        datos = self.entry.text().strip()
         if ',' not in datos:
-            messagebox.showerror("Error", "Formato: origen,destino")
+            QMessageBox.critical(self, "Error", "Formato: origen,destino")
             return
         origen, destino = datos.split(',')
         self.grafo.agregar_arista(origen.strip(), destino.strip())
-        self.texto.insert(tk.END, f"Agregado: {origen.strip()} -> {destino.strip()}\n")
-        self.entry.delete(0, tk.END)
-        self.mostrar_grafo()  # Mostrar el grafo automáticamente al agregar
+        self.texto.append(f"Agregado: {origen.strip()} -> {destino.strip()}")
+        self.entry.clear()
+        self.grafo_canvas.set_grafo(self.grafo)
 
     def cargar_csv(self):
-        archivo = filedialog.askopenfilename(filetypes=[("CSV", "*.csv")])
+        archivo, _ = QFileDialog.getOpenFileName(self, "Abrir CSV", "", "CSV Files (*.csv)")
         if archivo:
             with open(archivo, 'r') as f:
                 for linea in f:
                     origen, destino = linea.strip().split(',')
                     self.grafo.agregar_arista(origen, destino)
-                    self.texto.insert(tk.END, f"Cargado: {origen} -> {destino}\n")
-            self.mostrar_grafo()  # Mostrar el grafo automáticamente al cargar CSV
+                    self.texto.append(f"Cargado: {origen} -> {destino}")
+            self.grafo_canvas.set_grafo(self.grafo)
 
     def pedir_estacion(self, titulo, mensaje):
-        dialog = tk.Toplevel(self.root)
-        dialog.title(titulo)
-        dialog.configure(bg="#23272e")
-        dialog.grab_set()  # Hace modal la ventana
-
-        label = tk.Label(dialog, text=mensaje, bg="#23272e", fg="#f8f8f2", font=("Segoe UI", 11))
-        label.pack(padx=20, pady=(20, 10))
-
-        entry = tk.Entry(dialog, width=30, font=("Segoe UI", 11))
-        entry.pack(padx=20, pady=10)
-        entry.focus_set()
-
-        resultado = {"valor": None}
-
-        def aceptar():
-            resultado["valor"] = entry.get().strip()
-            dialog.destroy()
-
-        btn = tk.Button(dialog, text="Aceptar", command=aceptar, bg="#1976D2", fg="#FFFFFF", font=("Segoe UI", 10, "bold"), relief=tk.FLAT, activebackground="#1565C0")
-        btn.pack(pady=(0, 20))
-
-        dialog.bind("<Return>", lambda event: aceptar())
-        dialog.wait_window()
-        return resultado["valor"]
+        texto, ok = QInputDialog.getText(self, titulo, mensaje)
+        return texto.strip() if ok and texto else None
 
     def buscar_ruta(self):
         inicio = self.pedir_estacion("Inicio", "Estación de inicio:")
@@ -110,51 +184,12 @@ class TransporteApp:
         if inicio and fin:
             ruta = dfs(self.grafo, inicio, fin)
             if ruta:
-                self.texto.insert(tk.END, f"Ruta DFS: {' -> '.join(ruta)}\n")
+                self.resultado.setText(f"Ruta DFS: {' -> '.join(ruta)}")
             else:
-                messagebox.showinfo("Info", "No se encontró ruta.")
-
-    def mostrar_grafo(self):
-        # Elimina el canvas anterior si existe
-        if self.canvas:
-            self.canvas.get_tk_widget().destroy()
-
-        G = nx.Graph()
-        for nombre, nodo in self.grafo.nodos.items():
-            G.add_node(nombre)
-            for adyacente in nodo.adyacentes:
-                G.add_edge(nombre, adyacente.nombre)
-
-        fig, ax = plt.subplots(figsize=(5, 4))
-        pos = nx.spring_layout(G, seed=42)
-        nx.draw(
-            G, pos,
-            with_labels=False,  # No mostrar etiquetas dentro de los nodos
-            node_color="#4FC3F7",
-            node_size=600,      # Nodos más pequeños
-            edge_color="#1976D2",
-            ax=ax
-        )
-        # Mostrar etiquetas debajo de los nodos
-        nx.draw_networkx_labels(
-            G, pos,
-            labels={n: n for n in G.nodes()},
-            font_size=10,
-            font_color="#FFFFFF",
-            font_weight='bold',
-            verticalalignment='bottom'
-        )
-        ax.set_title("Visualización del Grafo de Paradas", fontsize=13, color="#f8f8f2")
-        ax.set_facecolor("#282a36")
-        fig.patch.set_facecolor("#282a36")
-        ax.axis('off')
-
-        self.canvas = FigureCanvasTkAgg(fig, master=self.grafo_frame)
-        self.canvas.draw()
-        self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
-        plt.close(fig)  # Cierra la figura para evitar advertencias
+                self.resultado.setText("Ruta DFS: No se encontró ruta.")
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = TransporteApp(root)
-    root.mainloop()
+    app = QApplication(sys.argv)
+    ventana = TransporteApp()
+    ventana.show()
+    sys.exit(app.exec_())
