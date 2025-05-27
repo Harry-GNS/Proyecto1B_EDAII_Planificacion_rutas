@@ -30,7 +30,7 @@ class GrafoCanvas(FigureCanvas):
             G, pos,
             with_labels=False,
             node_color="#E0E7EF",
-            node_size=320,
+            node_size=160,  # Círculos pequeños
             edge_color="#B0BEC5",
             linewidths=1.5,
             ax=self.ax
@@ -39,7 +39,7 @@ class GrafoCanvas(FigureCanvas):
         nx.draw_networkx_labels(
             G, label_pos,
             labels={n: n for n in G.nodes()},
-            font_size=9,
+            font_size=7,  # Más pequeño
             font_color="#FFFFFF",
             font_weight='light',
             bbox=dict(boxstyle="round,pad=0.25", fc="#23272e", ec="#B0BEC5", lw=1, alpha=0.85),
@@ -88,6 +88,14 @@ class TransporteApp(QWidget):
                 border-radius: 6px;
                 font-size: 11pt;
             }
+            QTextEdit#CargadosTextEdit {
+                font-size: 9pt; /* Más pequeño */
+                background: #23272e;
+                color: #80cbc4;
+                border: 2px solid #44475a;
+                border-radius: 8px;
+                margin-bottom: 12px;
+            }
             QTextEdit { padding: 8px; }
         """)
         self.grafo = Grafo()
@@ -95,9 +103,10 @@ class TransporteApp(QWidget):
         self.showMaximized()
 
     def init_ui(self):
-        main_layout = QHBoxLayout(self)
+        main_layout = QVBoxLayout(self)
 
-        # --- LADO IZQUIERDO: Controles ---
+        # --- Panel superior: controles y resultados ---
+        top_panel = QHBoxLayout()
         left_panel = QVBoxLayout()
         left_panel.setSpacing(18)
 
@@ -123,35 +132,41 @@ class TransporteApp(QWidget):
         self.buscar_btn.clicked.connect(self.buscar_ruta)
         left_panel.addWidget(self.buscar_btn)
 
-        # Texto de resultados de agregados/cargados
+        # Texto de resultados de agregados/cargados (más alto, bien encuadrado, sin barra scroll)
         self.texto = QTextEdit()
+        self.texto.setObjectName("CargadosTextEdit")
         self.texto.setReadOnly(True)
-        self.texto.setFixedHeight(90)
+        self.texto.setFixedHeight(180)
+        self.texto.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.texto.setLineWrapMode(QTextEdit.WidgetWidth)
         left_panel.addWidget(self.texto)
 
-        # Línea separadora
-        line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setFrameShadow(QFrame.Sunken)
-        line.setStyleSheet("color: #44475a; background: #44475a; max-height: 2px;")
-        left_panel.addWidget(line)
+        # Línea separadora entre cuadros
+        dfs_line = QFrame()
+        dfs_line.setFrameShape(QFrame.HLine)
+        dfs_line.setFrameShadow(QFrame.Sunken)
+        dfs_line.setStyleSheet("color: #44475a; background: #44475a; max-height: 2px; margin-bottom: 8px;")
+        left_panel.addWidget(dfs_line)
 
-        # Texto de resultado de búsqueda DFS (abajo, separado)
-        self.resultado = QTextEdit()
-        self.resultado.setReadOnly(True)
-        self.resultado.setFixedHeight(40)
-        left_panel.addWidget(self.resultado)
-
-        # Espaciador para empujar todo hacia arriba
-        left_panel.addStretch(1)
+        left_panel.addStretch(0)
 
         # --- LADO DERECHO: Grafo ---
         self.grafo_canvas = GrafoCanvas(self.grafo)
         self.grafo_canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        # --- Distribución principal ---
-        main_layout.addLayout(left_panel, stretch=1)
-        main_layout.addWidget(self.grafo_canvas, stretch=3)
+        # --- Panel superior: controles (izq) y grafo (der) ---
+        top_panel.addLayout(left_panel, stretch=1)
+        top_panel.addWidget(self.grafo_canvas, stretch=2)
+
+        # --- Panel inferior: resultado DFS a lo ancho ---
+        self.resultado = QTextEdit()
+        self.resultado.setReadOnly(True)
+        self.resultado.setStyleSheet("background: #23272e; color: #FFD600; font-size: 12pt; border: 2px solid #44475a; border-radius: 8px;")
+        self.resultado.setLineWrapMode(QTextEdit.WidgetWidth)
+        self.resultado.setFixedHeight(70)
+
+        main_layout.addLayout(top_panel, stretch=5)
+        main_layout.addWidget(self.resultado, stretch=0)
 
     def agregar_parada(self):
         datos = self.entry.text().strip()
