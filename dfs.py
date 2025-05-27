@@ -7,13 +7,18 @@ def dfs(grafo, inicio, fin):
         return None
 
     pila = [(start, [start.nombre])]  # (nodo_actual, ruta_actual)
+    visitados = set()  # Conjunto para almacenar nodos visitados
+
     while pila:
         nodo, ruta = pila.pop()
         if nodo == end:
             return ruta
-        if not nodo.visitado:
-            nodo.visitado = True
+        
+        if nodo.nombre not in visitados:  # Verifica si ya fue visitado
+            visitados.add(nodo.nombre)  # Marca como visitado
+
             for adyacente in nodo.adyacentes:
-                if not adyacente.visitado:
+                if adyacente.nombre not in visitados:
                     pila.append((adyacente, ruta + [adyacente.nombre]))
+
     return None
