@@ -12,3 +12,10 @@ Programa en Python que implementa algoritmos BFS y DFS para análisis de redes d
 
 ## 🚀 Instalación Rápida
 
+
+## Cosas por hacer
+Tinitana, como el repositorio aún es privado y solo nosotros lo podemos ver, aquí están las modificaciones que necesitas realizar en el código:
+
+Agregar un archivo .py que implemente un menú principal, permitiendo elegir entre la ejecución de BFS y DFS.
+
+Incorporar tu implementación de BFS dentro del código, asegurando que funcione correctamente en la estructura del proyecto.
