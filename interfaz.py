@@ -12,7 +12,7 @@ import matplotlib.image as mpimg
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 
 from grafo import Grafo
-from dfs import dfs
+from dfs import dfs_ruta_mas_profunda
 
 class GrafoCanvas(FigureCanvas):
     def __init__(self, grafo):
@@ -213,11 +213,11 @@ class TransporteApp(QWidget):
         inicio = self.pedir_estacion("Inicio", "Estación de inicio:")
         fin = self.pedir_estacion("Fin", "Estación de destino:")
         if inicio and fin:
-            ruta = dfs(self.grafo, inicio, fin)
+            ruta = dfs_ruta_mas_profunda(self.grafo, inicio, fin)
             if ruta:
-                self.resultado.setText(f"Ruta DFS: {' -> '.join(ruta)}")
+                self.resultado.setText(f"Ruta más profunda: {' -> '.join(ruta)}")
             else:
-                self.resultado.setText("Ruta DFS: No se encontró ruta.")
+                self.resultado.setText("Ruta más profunda: No se encontró ruta.")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
