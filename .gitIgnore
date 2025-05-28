@@ -8,6 +8,7 @@ build/     # Archivos generados automáticamente
 .idea/     # Configuración de JetBrains IDEs (como WebStorm, PyCharm)
 .vscode/   # Configuración de VS Code
 __pycache__/  # Caché de Python
+
 *.pyc         # Archivos compilados de Python
 venv/         # Entorno virtual
 *.swp         # Archivos temporales de Vim
