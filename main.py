@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushBut
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 
-from interfaz import TransporteApp
+from interfaz import TransporteApp, TransporteAppBFS
 
 class MenuPrincipal(QWidget):
     def __init__(self):
@@ -36,7 +36,10 @@ class MenuPrincipal(QWidget):
         self.ventana_dfs.show()
 
     def abrir_bfs(self):
-        QMessageBox.information(self, "BFS", "La opción BFS estará disponible próximamente.")
+        self.hide()
+        self.ventana_bfs = TransporteAppBFS()
+        self.ventana_bfs.showMaximized()
+        self.ventana_bfs.show()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
