@@ -33,7 +33,7 @@ class GrafoCanvas(FigureCanvas):
             G, pos,
             with_labels=False,
             node_color='none',  # No dibujar círculos
-            node_size=160,
+            node_size=10,
             edge_color="#B0BEC5",
             linewidths=1.5,
             ax=self.ax
@@ -46,15 +46,16 @@ class GrafoCanvas(FigureCanvas):
         # Coloca la imagen en cada nodo
         if img is not None:
             for p in pos.values():
-                imagebox = OffsetImage(img, zoom=0.05)  # Ajusta el zoom según tamaño deseado
+                imagebox = OffsetImage(img, zoom=0.02)  # Ajusta el zoom según tamaño deseado
                 ab = AnnotationBbox(imagebox, p, frameon=False)
                 self.ax.add_artist(ab)
+                
         # Etiquetas encima de la imagen
         label_pos = {k: (v[0], v[1]+0.09) for k, v in pos.items()}
         nx.draw_networkx_labels(
             G, label_pos,
             labels={n: n for n in G.nodes()},
-            font_size=7,
+            font_size=4,
             font_color="#FFFFFF",
             font_weight='light',
             bbox=dict(boxstyle="round,pad=0.25", fc="#23272e", ec="#B0BEC5", lw=1, alpha=0.85),
@@ -197,7 +198,7 @@ class TransporteApp(QWidget):
     def cargar_csv(self):
         archivo, _ = QFileDialog.getOpenFileName(self, "Abrir CSV", "", "CSV Files (*.csv)")
         if archivo:
-            with open(archivo, 'r') as f:
+            with open(archivo, 'r',encoding='utf-8') as f:
                 for linea in f:
                     origen, destino = linea.strip().split(',')
                     self.grafo.agregar_arista(origen, destino)
