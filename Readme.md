@@ -8,7 +8,7 @@
 Aplicación en Python que utiliza algoritmos BFS y DFS para analizar y planificar rutas en redes de transporte público.
 
 ## 📌 Características Principales
-- Implementación de grafos con clases \`Grafo\`, \`Nodo\` y \`Arista\`.
+- Implementación de grafos con clases `Grafo`, `Nodo` y `Arista`.
 - Algoritmos BFS (ruta más corta) y DFS (ruta más profunda) aplicados a redes de paradas.
 - Interfaz gráfica intuitiva con PyQt5 y visualización de grafos con NetworkX y Matplotlib.
 - Carga de datos manual o desde archivos CSV.
