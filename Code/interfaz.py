@@ -74,6 +74,8 @@ class GrafoCanvas(FigureCanvas):
         self.ax.axis('off')
         self.draw()
 
+# ...existing code...
+
 class TransporteApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -149,6 +151,11 @@ class TransporteApp(QWidget):
         self.buscar_btn.clicked.connect(self.buscar_ruta)
         left_panel.addWidget(self.buscar_btn)
 
+        # Botón de borrar todo
+        self.borrar_btn = QPushButton("Borrar Todo")
+        self.borrar_btn.clicked.connect(self.borrar_todo)
+        left_panel.addWidget(self.borrar_btn)
+
         # Texto de resultados de agregados/cargados (más alto, bien encuadrado, con barra scroll)
         self.texto = QTextEdit()
         self.texto.setObjectName("CargadosTextEdit")
@@ -185,6 +192,16 @@ class TransporteApp(QWidget):
         main_layout.addLayout(top_panel, stretch=5)
         main_layout.addWidget(self.resultado, stretch=0)
 
+    # ...existing methods...
+
+    def borrar_todo(self):
+        self.grafo = Grafo()
+        self.grafo_canvas.set_grafo(self.grafo)
+        self.texto.clear()
+        self.resultado.clear()
+        self.entry.clear()
+
+# ...existing code...
     def agregar_parada(self):
         datos = self.entry.text().strip()
         if ',' not in datos:
@@ -265,52 +282,91 @@ class TransporteAppBFS(QWidget):
         self.init_ui()
         self.showMaximized()
 
+    # ...existing code...
+
     def init_ui(self):
         main_layout = QVBoxLayout(self)
+
+        # --- Panel superior: controles y resultados ---
         top_panel = QHBoxLayout()
         left_panel = QVBoxLayout()
         left_panel.setSpacing(18)
-        title = QLabel("Planificador de Rutas BFS")
+
+        title = QLabel("Planificador de Rutas DFS")
         title.setFont(QFont("Segoe UI", 20, QFont.Bold))
         title.setAlignment(Qt.AlignCenter)
         left_panel.addWidget(title)
+
+        # Entrada de paradas
         self.entry = QLineEdit()
         self.entry.setPlaceholderText("Parada (origen,destino)")
         left_panel.addWidget(self.entry)
+
         self.add_btn = QPushButton("Agregar")
         self.add_btn.clicked.connect(self.agregar_parada)
         left_panel.addWidget(self.add_btn)
+
         self.csv_btn = QPushButton("Cargar CSV")
         self.csv_btn.clicked.connect(self.cargar_csv)
         left_panel.addWidget(self.csv_btn)
-        self.buscar_btn = QPushButton("Buscar Ruta BFS")
+
+        self.buscar_btn = QPushButton("Buscar Ruta DFS")
         self.buscar_btn.clicked.connect(self.buscar_ruta)
         left_panel.addWidget(self.buscar_btn)
+
+        # Botón de borrar todo
+        self.borrar_btn = QPushButton("Borrar Todo")
+        self.borrar_btn.clicked.connect(self.borrar_todo)
+        left_panel.addWidget(self.borrar_btn)
+
+        # Texto de resultados de agregados/cargados (más pequeño y compacto)
         self.texto = QTextEdit()
         self.texto.setObjectName("CargadosTextEdit")
         self.texto.setReadOnly(True)
-        self.texto.setFixedHeight(180)
+        self.texto.setFixedHeight(50)  # Más pequeño
         self.texto.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.texto.setLineWrapMode(QTextEdit.WidgetWidth)
+        self.texto.setStyleSheet("""
+            QTextEdit#CargadosTextEdit {
+                font-size: 5pt;
+                background: #23272e;
+                color: #80cbc4;
+                border: 2px solid #44475a;
+                border-radius: 8px;
+                margin-bottom: 8px;
+                padding: 4px;
+            }
+        """)
         left_panel.addWidget(self.texto)
-        bfs_line = QFrame()
-        bfs_line.setFrameShape(QFrame.HLine)
-        bfs_line.setFrameShadow(QFrame.Sunken)
-        bfs_line.setStyleSheet("color: #44475a; background: #44475a; max-height: 2px; margin-bottom: 8px;")
-        left_panel.addWidget(bfs_line)
+
+        # Línea separadora entre cuadros
+        dfs_line = QFrame()
+        dfs_line.setFrameShape(QFrame.HLine)
+        dfs_line.setFrameShadow(QFrame.Sunken)
+        dfs_line.setStyleSheet("color: #44475a; background: #44475a; max-height: 2px; margin-bottom: 8px;")
+        left_panel.addWidget(dfs_line)
+
         left_panel.addStretch(0)
+
+        # --- LADO DERECHO: Grafo ---
         self.grafo_canvas = GrafoCanvas(self.grafo)
         self.grafo_canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        # --- Panel superior: controles (izq) y grafo (der) ---
         top_panel.addLayout(left_panel, stretch=1)
         top_panel.addWidget(self.grafo_canvas, stretch=2)
+
+        # --- Panel inferior: resultado DFS a lo ancho ---
         self.resultado = QTextEdit()
         self.resultado.setReadOnly(True)
-        self.resultado.setStyleSheet("background: #23272e; color: #00E676; font-size: 12pt; border: 2px solid #44475a; border-radius: 8px;")
+        self.resultado.setStyleSheet("background: #23272e; color: #FFD600; font-size: 12pt; border: 2px solid #44475a; border-radius: 8px;")
         self.resultado.setLineWrapMode(QTextEdit.WidgetWidth)
         self.resultado.setFixedHeight(70)
+
         main_layout.addLayout(top_panel, stretch=5)
         main_layout.addWidget(self.resultado, stretch=0)
 
+# ...existing code...
     def agregar_parada(self):
         datos = self.entry.text().strip()
         if ',' not in datos:
